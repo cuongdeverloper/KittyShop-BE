@@ -1,6 +1,6 @@
 const { createJWT, createRefreshToken } = require('../middleware/JWTAction');
 const user = require('../model/user');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const apiLogin = async (req, res) => {
