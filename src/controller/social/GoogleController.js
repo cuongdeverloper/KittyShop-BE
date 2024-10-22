@@ -15,8 +15,8 @@ const doLoginWGoogle = () => {
         let dataRaw = {
             name: profile.displayName,
             email: profile.emails && profile.emails.length > 0 ? profile.emails[0].value : "",
+            photo:profile.photos[0].value
         };
-        // console.log('kk',profile)
         let dataUser = await upsertSocialMedia(typeAcc, dataRaw);
         // console.log('loz',dataUser)
         return cb(null, dataUser);

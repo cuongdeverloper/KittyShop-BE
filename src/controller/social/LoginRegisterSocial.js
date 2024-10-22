@@ -25,6 +25,7 @@ const upsertSocialMedia = async (typeAcc, dataRaw) => {
                     email: dataRaw.email,
                     name: dataRaw.name,
                     type: typeAcc,
+                    profileImage:dataRaw.photo,
                     socialLogin: true // Set socialLogin to true for new users
                 });
                 await dataUser.save();

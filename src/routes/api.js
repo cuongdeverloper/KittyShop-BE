@@ -2,8 +2,8 @@ const express = require('express');
 const passport = require('passport');
 const { checkAccessToken, createJWT, createRefreshToken, verifyAccessToken, decodeToken } = require("../middleware/JWTAction");
 const { apiLogin } = require("../controller/ApiAuth");
-const { postCreateUserApi, getUserApi, deleteUserApi, updateUserApi } = require("../controller/ApiUser");
-const { postCreateProductApi, getAllProducts, getProductsByCategory, updateProductSizeQuantity, getProductById } = require('../controller/ApiProduct');
+const { postCreateUserApi, getUserApi, deleteUserApi, updateUserApi, getUserWithPagination } = require("../controller/ApiUser");
+const { postCreateProductApi, getAllProducts, getProductsByCategory, updateProductSizeQuantity, getProductById, getAllCategories, deleteProductById, updateProductById } = require('../controller/ApiProduct');
 const { addToCart, getCart, deleteFromCart, getCartFromEachUser } = require('../controller/ApiCart');
 const { postImageCategoryHomePage, getAllCategoryHomepages, getCategoryHomepageByCategory } = require('../controller/ApiCategoryHomepage');
 
@@ -19,11 +19,14 @@ routerApi.post('/user', postCreateUserApi);
 routerApi.get('/user', getUserApi);
 routerApi.put('/user', updateUserApi);
 routerApi.delete('/user', deleteUserApi);
-
+routerApi.get('/user-pagination',getUserWithPagination)
 // Routes for product management
 routerApi.post('/product', postCreateProductApi);
 routerApi.get('/products', checkAccessToken, getAllProducts);
+routerApi.delete('/product/:productId',deleteProductById)
 routerApi.get('/product-category', getProductsByCategory);
+routerApi.get('/product/categories',getAllCategories)
+routerApi.put('/productById/:productId',updateProductById)
 routerApi.put('/products/:productId', checkAccessToken, updateProductSizeQuantity);
 routerApi.get('/product/:productId', getProductById);
 

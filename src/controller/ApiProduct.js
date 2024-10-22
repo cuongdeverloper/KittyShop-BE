@@ -138,6 +138,23 @@ const getProductsByCategory = async (req, res) => {
         });
     }
 };
+const getAllCategories = async (req, res) => {
+    try {
+        // Use aggregation to get distinct categories
+        const categories = await Product.distinct('category');
+        
+        return res.status(200).json({
+            errorCode: 0,
+            data: categories
+        });
+    } catch (error) {
+        console.error('Error retrieving categories:', error);
+        return res.status(500).json({
+            errorCode: 3,
+            message: 'An error occurred while retrieving categories'
+        });
+    }
+};
 
 
 const updateProductSizeQuantity = async (req, res) => {
@@ -203,5 +220,106 @@ const getProductById = async (req, res) => {
 };
 
 
+const deleteProductById = async (req, res) => {
+    const { productId } = req.params;
 
-module.exports = { postCreateProductApi, getAllProducts, getProductsByCategory,updateProductSizeQuantity,getProductById};
+    if (!productId) {
+        return res.status(400).json({
+            errorCode: 1,
+            message: 'Product ID is required'
+        });
+    }
+
+    try {
+        // Find and delete the product by its ID
+        const result = await Product.findByIdAndDelete(productId);
+
+        if (!result) {
+            return res.status(404).json({
+                errorCode: 2,
+                message: 'Product not found'
+            });
+        }
+
+        // Optionally, handle the deletion of associated files (e.g., images)
+        // This would depend on your specific requirements and setup
+
+        return res.status(200).json({
+            errorCode: 0,
+            message: 'Product deleted successfully'
+        });
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        return res.status(500).json({
+            errorCode: 3,
+            message: 'An error occurred while deleting the product',
+            details: error.message
+        });
+    }
+};
+
+const updateProductById = async (req, res) => {
+    const { productId } = req.params;
+
+    // Upload images to cloud or locally
+    uploadCloud.fields([
+        { name: 'previewImages', maxCount: 5 },
+        { name: 'productImages', maxCount: 15 }
+    ])(req, res, async (err) => {
+        if (err) {
+            return res.status(400).json({
+                errorCode: 4,
+                message: err.message
+            });
+        }
+
+        const { name, description, category, price, sizes, colors, salesPercent } = req.body;
+        const previewImages = req.files.previewImages ? req.files.previewImages.map(file => file.path) : [];
+        const productImages = req.files.productImages ? req.files.productImages.map(file => file.path) : [];
+
+        try {
+            // Find the product by ID
+            const product = await Product.findById(productId);
+            if (!product) {
+                return res.status(404).json({
+                    errorCode: 1,
+                    message: 'Product not found'
+                });
+            }
+
+            // Update fields only if they are provided in the request
+            if (name) product.name = name;
+            if (description) product.description = description;
+            if (category) product.category = category;
+            if (price) product.price = price;
+            if (sizes) product.sizes = JSON.parse(sizes);
+            if (colors) product.colors = colors.split(',');
+            if (salesPercent !== undefined) product.salesPercent = salesPercent;
+
+            // Update images if provided
+            if (previewImages.length > 0) product.previewImages = previewImages;
+            if (productImages.length > 0) product.productImages = productImages;
+
+            // Save the updated product
+            const updatedProduct = await product.save();
+
+            return res.status(200).json({
+                errorCode: 0,
+                data: updatedProduct,
+                message: 'Product updated successfully'
+            });
+        } catch (error) {
+            console.error('Error updating product:', error);
+            return res.status(500).json({
+                errorCode: 2,
+                message: 'An error occurred while updating the product',
+                details: error.message
+            });
+        }
+    });
+};
+
+
+module.exports = { postCreateProductApi, getAllProducts,
+     getProductsByCategory,updateProductSizeQuantity,getProductById
+    ,getAllCategories,deleteProductById,updateProductById};

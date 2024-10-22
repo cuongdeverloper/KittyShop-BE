@@ -58,20 +58,56 @@ const getUserApi = async (req, res) => {
         });
     }
 };
+const getUserWithPagination = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1; // Default to page 1
+        const limit = parseInt(req.query.limit) || 10; // Default to 10 users per page
 
+        // Calculate total number of users
+        const totalUsers = await User.countDocuments({});
+        const totalPages = Math.ceil(totalUsers / limit);
+
+        // Calculate the number of users to skip for pagination
+        const skip = (page - 1) * limit;
+
+        // Fetch users with pagination
+        const users = await User.find({})
+            .skip(skip)
+            .limit(limit);
+
+        // Return paginated users along with pagination info
+        return res.status(200).json({
+            errorCode: 0,
+            data: {
+                users,           // Array of user objects
+                currentPage: page,   // Current page number
+                totalPages,      // Total number of pages
+                totalUsers,      // Total number of users
+            }
+        });
+    } catch (error) {
+        console.error('Error retrieving users with pagination:', error);
+        return res.status(500).json({
+            errorCode: 3,
+            message: 'An error occurred while retrieving users'
+        });
+    }
+};
 // Create a new user
 const postCreateUserApi = async (req, res) => {
     uploadCloud.array('profileImage', 10)(req, res, async (err) => {
+        // Handle any multer/cloudinary upload errors
         if (err) {
             return res.status(400).json({
                 errorCode: 4,
-                message: err.message
+                message: `Upload Error: ${err.message}`
             });
         }
 
         const { email, password, name, role = 'USER', sex, phoneNumber } = req.body;
         const profileImage = req.files ? req.files.map(file => file.path) : [];
 
+        // Check if required fields are missing
         if (!email || !password || !name || !sex || !phoneNumber) {
             return res.status(400).json({
                 errorCode: 5,
@@ -79,8 +115,8 @@ const postCreateUserApi = async (req, res) => {
             });
         }
 
+        // Validate password strength
         const passwordPattern = /^(?=.*[A-Z]).{6,}$/;
-
         if (!passwordPattern.test(password)) {
             return res.status(400).json({
                 errorCode: 2,
@@ -89,6 +125,7 @@ const postCreateUserApi = async (req, res) => {
         }
 
         try {
+            // Check if email already exists
             let existingUser = await User.findOne({ email });
             if (existingUser) {
                 return res.status(400).json({
@@ -97,6 +134,7 @@ const postCreateUserApi = async (req, res) => {
                 });
             }
 
+            // Create a new user instance
             let userNew = new User({
                 email,
                 password,
@@ -107,11 +145,15 @@ const postCreateUserApi = async (req, res) => {
                 phoneNumber
             });
 
+            // Save the new user to the database
             await userNew.save();
+
+            // Return success response
             return res.status(200).json({
                 errorCode: 0,
                 data: userNew
             });
+
         } catch (saveError) {
             console.error('Error saving user:', saveError);
             return res.status(500).json({
@@ -121,6 +163,7 @@ const postCreateUserApi = async (req, res) => {
         }
     });
 };
+
 
 
 // Delete a user by ID
@@ -146,7 +189,8 @@ const deleteUserApi = async (req, res) => {
 
         return res.status(200).json({
             errorCode: 0,
-            data: deletedUser
+            data: deletedUser,
+            message:'Delete success'
         });
     } catch (error) {
         console.error('Error deleting user:', error);
@@ -159,22 +203,18 @@ const deleteUserApi = async (req, res) => {
 
 // Update a user by ID
 const updateUserApi = async (req, res) => {
-    upload(req, res, async (err) => {
+    uploadCloud.single('profileImage')(req, res, async (err) => {
         if (err) {
             return res.status(400).json({
                 errorCode: 4,
                 message: err.message
             });
         }
-        let id = req.body.id;
-        let email = req.body.email;
-        let name = req.body.name;
-        let role = req.body.role;
-        let sex = req.body.sex;
-        let phoneNumber = req.body.phoneNumber
+
+        const { id, name, role, sex, phoneNumber } = req.body;
         const profileImage = req.file ? req.file.path : null;
 
-        if (!id || !email || !name || !sex || !phoneNumber) {
+        if (!id || !name || !sex || !phoneNumber) {
             return res.status(400).json({
                 errorCode: 5,
                 message: 'All fields are required'
@@ -184,7 +224,7 @@ const updateUserApi = async (req, res) => {
         try {
             const updatedUser = await User.findByIdAndUpdate(
                 id,
-                { email, name, role, sex, phoneNumber, ...(profileImage && { profileImage }) },
+                { name, role, sex, phoneNumber, ...(profileImage && { profileImage }) },
                 { new: true }
             );
 
@@ -196,9 +236,9 @@ const updateUserApi = async (req, res) => {
             }
 
             return res.status(200).json({
-                EC: 0,
+                errorCode: 0,
                 data: updatedUser,
-                MC: 'Update information success'
+                message: 'Update successful'
             });
         } catch (updateError) {
             console.error('Error updating user:', updateError);
@@ -211,9 +251,11 @@ const updateUserApi = async (req, res) => {
 };
 
 
+
 module.exports = {
     postCreateUserApi,
     getUserApi,
     deleteUserApi,
-    updateUserApi
+    updateUserApi,
+    getUserWithPagination
 };
