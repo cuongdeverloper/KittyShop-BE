@@ -54,8 +54,8 @@ app.use((err, req, res, next) => {
   try {
     await connection();
     doLoginWGoogle();
-    app.listen(port, hostname, () => {
-      console.log(`Backend app listening on http://${hostname}:${port}`);
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`Backend app listening on http://0.0.0.0:${port}`);
     });
 
   } catch (error) {
