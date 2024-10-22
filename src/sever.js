@@ -42,7 +42,9 @@ configViewEngine(app);
 // API routes
 app.use('/v1/api/', routerApi);
 app.use('/', ApiNodejs);
-
+app.get("/", (req, res) => {
+  res.json("Hello");
+}) 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
