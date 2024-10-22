@@ -6,6 +6,7 @@ const { postCreateUserApi, getUserApi, deleteUserApi, updateUserApi, getUserWith
 const { postCreateProductApi, getAllProducts, getProductsByCategory, updateProductSizeQuantity, getProductById, getAllCategories, deleteProductById, updateProductById } = require('../controller/ApiProduct');
 const { addToCart, getCart, deleteFromCart, getCartFromEachUser } = require('../controller/ApiCart');
 const { postImageCategoryHomePage, getAllCategoryHomepages, getCategoryHomepageByCategory } = require('../controller/ApiCategoryHomepage');
+const { createOrder, getAllOrders, updateOrder } = require('../controller/ApiOrder');
 
 const routerApi = express.Router();
 const ApiNodejs = express.Router();
@@ -75,5 +76,9 @@ routerApi.post('/categoryHomepage',postImageCategoryHomePage)
 routerApi.get('/categoryHomepage',getAllCategoryHomepages)
 routerApi.post('/categoryHomepage-search',getCategoryHomepageByCategory)
 
+//Order
+routerApi.post('/createOrder',checkAccessToken,createOrder)
+routerApi.get('/getAllOrder',checkAccessToken,getAllOrders)
+routerApi.put('/updateOrder/:orderId',checkAccessToken,updateOrder)
 
 module.exports = { routerApi, ApiNodejs };
