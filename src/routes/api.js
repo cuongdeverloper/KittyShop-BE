@@ -36,7 +36,7 @@ ApiNodejs.get('/auth/google',
     passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 ApiNodejs.get('/google/redirect',
-    passport.authenticate('google', { failureRedirect: 'http://localhost:6969/login' }),
+    passport.authenticate('google', { failureRedirect: 'https://kity-shop-fe.vercel.app/login' }),
     (req, res) => {
         // Successful authentication, redirect home.
         // res.redirect('http://localhost:6969/');
@@ -44,12 +44,15 @@ ApiNodejs.get('/google/redirect',
 
         const accessToken = createJWT(payload);
         const refreshToken = createRefreshToken(payload);
+        const redirectUrl = `https://kity-shop-fe.vercel.app/auth/callback?accessToken=${encodeURIComponent(accessToken)}&refreshToken=${encodeURIComponent(refreshToken)}&user=${encodeURIComponent(JSON.stringify(req.user))}`;
+  
+          // Redirect to the frontend with tokens
+          res.redirect(redirectUrl);
         // res.json({
         //     accessToken: accessToken,
         //     refreshToken: refreshToken,
         //     user: req.user
         // });
-        res.render('social.ejs', { accessToken: accessToken, refreshToken: refreshToken, user: req.user })
     });
 
 
